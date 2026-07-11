@@ -1,0 +1,24 @@
+{
+  "name": "meta-navigator",
+  "version": "0.1.0",
+  "description": "MCP server that lets an agent browse Meta platforms (Instagram, Threads, Facebook) for you",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "login": "tsx scripts/login.ts",
+    "status": "tsx scripts/status.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "playwright": "^1.61.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

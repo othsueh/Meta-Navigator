@@ -1,0 +1,9 @@
+# 登入 session（cookies）存在這裡，絕對不能進版控
+browser-profile/
+
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+.claude/

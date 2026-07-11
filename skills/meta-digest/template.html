@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日動態 · Meta Digest</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --paper: #f4f0e8;
+    --ink: #26231f;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Noto Serif TC", "Songti TC", Georgia, serif;
+    background: var(--ink);
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  header.masthead {
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 20px;
+    flex-wrap: wrap;
+    padding: 12px 28px;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+  }
+  .masthead h1 {
+    font-size: 22px;
+    letter-spacing: 0.35em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .masthead .meta {
+    font-family: "Helvetica Neue", "PingFang TC", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6b6459;
+  }
+
+  .accordion {
+    display: flex;
+    height: calc(100% - 64px);
+  }
+
+  .band {
+    position: relative;
+    flex: 1;
+    min-width: 88px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: flex 0.55s cubic-bezier(0.65, 0, 0.25, 1);
+    border-right: 2px solid var(--ink);
+    display: flex;
+  }
+  .band:last-child { border-right: none; }
+  .band.open {
+    flex: 7;
+    cursor: default;
+  }
+
+  /* ── 收合時的直條 ── */
+  .spine {
+    width: 88px;
+    flex: 0 0 88px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 26px 0;
+    color: var(--spine-fg, var(--paper));
+    background: var(--band-color);
+    user-select: none;
+  }
+  .spine .idx {
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    opacity: 0.75;
+  }
+  .spine .title {
+    writing-mode: vertical-rl;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    white-space: nowrap;
+  }
+  .spine .count {
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    border: 1.5px solid currentColor;
+    border-radius: 999px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  .band:not(.open):hover .spine { filter: brightness(1.08); }
+
+  /* ── 展開後的內容區 ── */
+  .panel {
+    flex: 1;
+    min-width: 0;
+    background: var(--paper);
+    opacity: 0;
+    transition: opacity 0.35s ease 0.25s;
+    display: flex;
+    flex-direction: column;
+  }
+  .band.open .panel { opacity: 1; }
+
+  .panel-head {
+    padding: 26px 34px 18px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper);
+  }
+  .panel-head .kicker {
+    font-family: "Helvetica Neue", "PingFang TC", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--band-color);
+    margin-bottom: 6px;
+  }
+  .panel-head h2 {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .panel-head .lede {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #55503f;
+    font-family: "PingFang TC", sans-serif;
+  }
+
+  .cards {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px 34px 40px;
+  }
+  .card {
+    padding: 18px 0;
+    border-bottom: 1px solid #cfc8b8;
+    display: flex;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .card:last-child { border-bottom: none; }
+  .card .no {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--band-color);
+    min-width: 34px;
+  }
+  .card .body { flex: 1; min-width: 0; }
+  .card .author {
+    font-family: "PingFang TC", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .card .summary {
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .card .meta-row {
+    margin-top: 8px;
+    font-family: "Helvetica Neue", "PingFang TC", sans-serif;
+    font-size: 12px;
+    color: #8a8271;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: center;
+  }
+  .card a.src {
+    color: var(--band-color);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+  .platform-tag {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid #b5ac99;
+    border-radius: 3px;
+    padding: 1px 6px;
+  }
+
+  .skipped-note {
+    font-family: "PingFang TC", sans-serif;
+    font-size: 14px;
+    color: #6b6459;
+    line-height: 1.8;
+  }
+
+  /* ── 窄視窗（直式）：改成上下堆疊的手風琴 ── */
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    .accordion {
+      flex-direction: column;
+      height: auto;
+    }
+    .band {
+      flex: none;              /* 直式不用 flex 比例，高度由內容決定 */
+      flex-direction: column;  /* spine 在上、panel 在下 */
+      min-width: 0;
+      border-right: none;
+      border-bottom: 2px solid var(--ink);
+    }
+    .band:last-child { border-bottom: none; }
+    .band.open { flex: none; }
+    .spine {
+      width: 100%;
+      flex: 0 0 auto;
+      height: 60px;
+      flex-direction: row;
+      padding: 0 20px;
+      gap: 14px;
+    }
+    .spine .title {
+      writing-mode: horizontal-tb;
+      letter-spacing: 0.2em;
+      font-size: 19px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .spine .count { width: 30px; height: 30px; font-size: 12px; }
+    .panel {
+      display: none;           /* 收合時整塊拿掉，高度才不會殘留 */
+      opacity: 1;
+      transition: none;
+    }
+    .band.open .panel {
+      display: flex;
+      max-height: 70vh;        /* 內容多時面板內自己捲動 */
+    }
+    .panel-head { padding: 18px 20px 14px; }
+    .panel-head h2 { font-size: 26px; }
+    .cards { padding: 16px 20px 28px; }
+    .card { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!--
+  masthead .meta：換成本次 get_feed 的實際資訊（日期、平台、總篇數）
+-->
+<header class="masthead">
+  <h1>今日動態</h1>
+  <span class="meta">2026.07.02 · get_feed · threads + instagram · 20 篇</span>
+</header>
+
+<main class="accordion" id="accordion"></main>
+
+<script>
+/*
+  ── 安全性 helper（不要動）──
+  貼文內容（作者、摘要、網址）是從陌生人的公開貼文抓來的，屬於不可信資料。
+  插進 HTML 前一律用 esc() 逸出，網址一律用safeUrl() 過濾協定，
+  否則一篇 caption 內含 <img onerror> 或 javascript: 連結的貼文就會在此執行。
+*/
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+function safeUrl(v) {
+  const s = String(v ?? "").trim();
+  // 只放行 http/https；javascript:、data:、vbscript: 等一律擋掉
+  return /^https?:\/\//i.test(s) ? esc(s) : "#";
+}
+
+/*
+  ── 色盤庫（低飽和、舒適瀏覽用；不要另創顏色、不要調亮）──
+  每次 digest 由 agent 從五個主題挑一個填進 PALETTE：
+  依當次內容氛圍挑選或輪替；使用者表達偏好後就固定用那組。
+  直條顏色會依 TOPICS 順序自動從色盤取用，「已略過」固定深暖灰。
+*/
+const PALETTES = {
+  // 希臘度假：愛琴海藍、白牆邊的橄欖與陶土
+  "greek-getaway":     ["#4e6e8e", "#7d97ad", "#8a9077", "#b08d6e", "#a5977b", "#6f8489"],
+  // 碼頭鵜鶘：港灣灰藍、麻繩與浮木
+  "piers-pelican":     ["#5e7481", "#7c98a6", "#a9927b", "#746a5c", "#8f9d8a", "#a08b70"],
+  // 清晨漁人：黎明時分的霧色與舊帆
+  "morning-fishermen": ["#5d7370", "#7e8c99", "#ab8d80", "#96856a", "#6e8b8a", "#8a7f8e"],
+  // 水彩暈染：暈開的粉青與藕紫
+  "soft-watercolors":  ["#7f95ab", "#a58ea3", "#7fa093", "#b3948a", "#a3a17e", "#9d7f92"],
+  // 冰石：冷調的板岩與霜
+  "icy-stone":         ["#5c6b78", "#7b8a99", "#8e9aa4", "#6a7a85", "#7f8d87", "#8795a3"],
+};
+const SKIPPED_COLOR = "#4a463f";
+const SKIPPED_FG = "#9a948a";
+
+const PALETTE = "morning-fishermen"; // ← agent 每次挑一個主題
+
+/*
+  TOPICS 是要替換的資料區。規則：
+  - 依使用者興趣高→低排列，「已略過」永遠放最後一項（key 固定 "skipped"）。
+  - 不用填顏色，會依順序從 PALETTE 自動指派。
+  - 「已略過」posts 留空，改填 skippedSummary（一行說明略過了幾篇、
+    什麼類型，並邀請使用者糾正）與 skippedCount（略過篇數）。
+  - 以下為示意用的假資料。
+*/
+const TOPICS = [
+  {
+    key: "ai",
+    title: "AI 與科技",
+    kicker: "你最常聊的主題",
+    lede: "模型發佈與論文討論偏多，其中兩篇跟你最近在做的 MCP 有直接關聯。",
+    posts: [
+      { author: "@ml_paperdaily（Threads）", platform: "Threads",
+        summary: "整理了這週三篇 speech emotion recognition 的新論文，指出以 SSL 特徵為底的方法在 cross-corpus 上仍然掉分嚴重。",
+        time: "3 小時前", likes: 412, url: "https://www.threads.com/@ml_paperdaily/post/xxxx" },
+      { author: "@devtoolsfan（Threads）", platform: "Threads",
+        summary: "在討論 MCP server 的權限模型：工具描述寫得太籠統會讓 agent 濫用，建議每個工具的副作用都寫進 description。",
+        time: "5 小時前", likes: 288, url: "https://www.threads.com/@devtoolsfan/post/xxxx" },
+      { author: "科技島讀（Facebook）", platform: "Facebook",
+        summary: "分析 Meta 最新一季財報：Reality Labs 虧損收窄，但廣告仍佔營收 96%，AI 助理的變現路線還不明朗。",
+        time: "8 小時前", likes: 1530, url: "https://www.facebook.com/xxxx" },
+      { author: "@oss_weekly（Threads）", platform: "Threads",
+        summary: "Playwright 1.62 釋出：persistent context 的 storage partition 行為有變，升級前先看 migration note。",
+        time: "11 小時前", likes: 96, url: "https://www.threads.com/@oss_weekly/post/xxxx" },
+      { author: "@gpu_poor（Threads）", platform: "Threads",
+        summary: "用兩張 4090 跑 70B 量化模型的實測心得：推論速度可用，但長 context 下 KV cache 還是爆記憶體。",
+        time: "13 小時前", likes: 674, url: "https://www.threads.com/@gpu_poor/post/xxxx" },
+    ],
+  },
+  {
+    key: "friends",
+    title: "朋友近況",
+    kicker: "你追蹤的人",
+    lede: "兩場聚會、一個新工作，還有人在找羽球團員。",
+    posts: [
+      { author: "王小明（Instagram）", platform: "Instagram",
+        summary: "發了研究室聚餐的照片，配文說 meeting 終於過了，下週要去環島。",
+        time: "2 小時前", likes: 87, url: "https://www.instagram.com/p/xxxx/" },
+      { author: "@chia_lin（Threads）", platform: "Threads",
+        summary: "宣布下個月到新加坡的新工作報到，在問有沒有人熟悉當地租屋。",
+        time: "6 小時前", likes: 143, url: "https://www.threads.com/@chia_lin/post/xxxx" },
+      { author: "阿哲（Facebook）", platform: "Facebook",
+        summary: "週六早上的羽球團缺兩個人，地點在成大附近，樓下留言＋1。",
+        time: "9 小時前", likes: 21, url: "https://www.facebook.com/xxxx" },
+      { author: "@yun.photo（Instagram）", platform: "Instagram",
+        summary: "貼了上週在阿里山拍的日出縮時，說底片版沖出來效果比數位好。",
+        time: "1 天前", likes: 232, url: "https://www.instagram.com/p/xxxx/" },
+    ],
+  },
+  {
+    key: "photo",
+    title: "攝影與設計",
+    kicker: "視覺靈感",
+    lede: "一組編輯排版參考跟一支新鏡頭的實拍。",
+    posts: [
+      { author: "@editorial.layouts（Instagram）", platform: "Instagram",
+        summary: "分享 70 年代瑞士雜誌的網格系統拆解，直排標題與大級數頁碼的用法正好是你喜歡的風格。",
+        time: "4 小時前", likes: 1980, url: "https://www.instagram.com/p/xxxx/" },
+      { author: "@lens_review_tw（Threads）", platform: "Threads",
+        summary: "Sigma 35mm f/1.2 II 實拍：逆光紫邊改善明顯，但重量還是勸退散步街拍的人。",
+        time: "10 小時前", likes: 356, url: "https://www.threads.com/@lens_review_tw/post/xxxx" },
+      { author: "設計發浪（Facebook）", platform: "Facebook",
+        summary: "介紹今年金點設計獎入圍的三件平面作品，都在玩活字與網版印刷的混合質感。",
+        time: "14 小時前", likes: 542, url: "https://www.facebook.com/xxxx" },
+    ],
+  },
+  {
+    key: "news",
+    title: "時事與其他",
+    kicker: "掃過就好",
+    lede: "颱風動態一則、演唱會售票兩則。",
+    posts: [
+      { author: "報天氣（Facebook）", platform: "Facebook",
+        summary: "第 5 號颱風外圍環流影響，週四五東半部有大雨，山區注意。",
+        time: "1 小時前", likes: 3211, url: "https://www.facebook.com/xxxx" },
+      { author: "@concert_alert（Threads）", platform: "Threads",
+        summary: "十一月台北場演唱會週五中午開賣，會員預購提前一天。",
+        time: "7 小時前", likes: 654, url: "https://www.threads.com/@concert_alert/post/xxxx" },
+      { author: "@concert_alert（Threads）", platform: "Threads",
+        summary: "加開場次確定，座位圖已公布，搖滾區比首場多兩排。",
+        time: "12 小時前", likes: 421, url: "https://www.threads.com/@concert_alert/post/xxxx" },
+    ],
+  },
+  {
+    key: "skipped",
+    title: "已略過",
+    kicker: "低興趣內容",
+    lede: null,
+    skippedSummary: "另有 3 篇已略過：2 篇政治口水戰的轉發討論、1 篇抽獎活動。判斷有誤的話點開原文連結告訴我，我會記住。",
+    skippedCount: 3,
+    posts: [],
+  },
+];
+
+const acc = document.getElementById("accordion");
+const bandColors = PALETTES[PALETTE] ?? Object.values(PALETTES)[0];
+let colorIdx = 0;
+
+TOPICS.forEach((t, i) => {
+  const band = document.createElement("section");
+  band.className = "band" + (i === 0 ? " open" : "");
+
+  const isSkipped = t.key === "skipped";
+  band.style.setProperty(
+    "--band-color",
+    isSkipped ? SKIPPED_COLOR : bandColors[colorIdx++ % bandColors.length],
+  );
+  if (isSkipped) band.style.setProperty("--spine-fg", SKIPPED_FG);
+
+  const countLabel = t.posts.length || t.skippedCount || "…";
+
+  band.innerHTML = `
+    <div class="spine">
+      <span class="idx">0${i + 1}</span>
+      <span class="title">${esc(t.title)}</span>
+      <span class="count">${esc(countLabel)}</span>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="kicker">${esc(t.kicker)}</div>
+        <h2>${esc(t.title)}</h2>
+        ${t.lede ? `<div class="lede">${esc(t.lede)}</div>` : ""}
+      </div>
+      <div class="cards">
+        ${
+          t.posts.length
+            ? t.posts.map((p, j) => `
+              <article class="card">
+                <span class="no">${String(j + 1).padStart(2, "0")}</span>
+                <div class="body">
+                  <div class="author">${esc(p.author)}</div>
+                  <div class="summary">${esc(p.summary)}</div>
+                  <div class="meta-row">
+                    <span class="platform-tag">${esc(p.platform)}</span>
+                    <span>${esc(p.time)}</span>
+                    <span>♥ ${p.likes.toLocaleString()}</span>
+                    <a class="src" href="${safeUrl(p.url)}" target="_blank" rel="noopener">開啟原文 ↗</a>
+                  </div>
+                </div>
+              </article>`).join("")
+            : `<p class="skipped-note">${esc(t.skippedSummary)}</p>`
+        }
+      </div>
+    </div>`;
+
+  band.addEventListener("click", () => {
+    if (band.classList.contains("open")) return;
+    acc.querySelectorAll(".band.open").forEach((b) => b.classList.remove("open"));
+    band.classList.add("open");
+  });
+
+  acc.appendChild(band);
+});
+</script>
+
+</body>
+</html>
