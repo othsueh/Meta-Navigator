@@ -29,7 +29,7 @@ npm run login
   "mcpServers": {
     "meta-navigator": {
       "command": "node",
-      "args": ["/Users/othsueh/Development/350small_project/Meta_navigator/dist/index.js"]
+      "args": ["/[Where you clone the repo]/Meta_navigator/dist/index.js"]
     }
   }
 }
