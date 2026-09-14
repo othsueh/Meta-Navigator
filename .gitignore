@@ -7,3 +7,7 @@ dist/
 *.log
 .DS_Store
 .claude/
+
+# skill 打包檔與 macOS 壓縮殘留，需要時再重新打包
+*.zip
+__MACOSX/

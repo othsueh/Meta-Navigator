@@ -6,7 +6,6 @@ import { registerOpenLogin } from "./tools/open-login.js";
 import { registerGetFeed } from "./tools/get-feed.js";
 import { registerSearchPosts } from "./tools/search-posts.js";
 import { registerGetUserPosts } from "./tools/get-user-posts.js";
-import { registerListStories } from "./tools/list-stories.js";
 import { registerBookmarkPost } from "./tools/bookmark-post.js";
 
 const server = new McpServer({
@@ -19,7 +18,6 @@ registerOpenLogin(server);
 registerGetFeed(server);
 registerSearchPosts(server);
 registerGetUserPosts(server);
-registerListStories(server);
 registerBookmarkPost(server);
 
 async function shutdown(): Promise<void> {

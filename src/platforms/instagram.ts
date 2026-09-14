@@ -2,7 +2,6 @@ import type { Page } from "playwright";
 import { PLATFORM_URLS } from "../config.js";
 import { openPage } from "../browser/session.js";
 import {
-  extractReelsTray,
   parseIgFeedText,
   parseIgSearchText,
   parseIgUserTimelineText,
@@ -15,42 +14,7 @@ import {
   type RawIgFeedPost,
 } from "../extractors/instagram.js";
 import { collectFeed } from "./feed-collector.js";
-import type { StoryEntry, FeedPost } from "./types.js";
-
-function toIso(epochSeconds: number): string | undefined {
-  return epochSeconds > 0
-    ? new Date(epochSeconds * 1000).toISOString()
-    : undefined;
-}
-
-/**
- * 列出目前有發限動的帳號。只讀首頁內嵌的 tray 資料，
- * 不會點開限動，不會產生已讀。
- */
-export async function getActiveStories(): Promise<StoryEntry[]> {
-  const page = await openPage(PLATFORM_URLS.instagram);
-  const tray = await extractReelsTray(page);
-
-  if (tray.length === 0) {
-    // 分不清「真的沒人發限動」跟「IG 改版導致抓不到資料」，
-    // 用登入 cookie 之外的訊號輔助判斷：頁面上有沒有 canvas（限動圈）
-    const canvasCount = await page.locator("canvas").count();
-    if (canvasCount > 1) {
-      throw new Error(
-        "頁面上看得到限動圈，但抓不到 tray 資料——IG 可能改版了，請檢查 src/extractors/instagram.ts",
-      );
-    }
-  }
-
-  return tray.map((e) => ({
-    username: e.username,
-    fullName: e.fullName ?? undefined,
-    hasUnseen: e.latestReelMedia > e.seen,
-    latestStoryAt: toIso(e.latestReelMedia),
-    expiresAt: toIso(e.expiringAt),
-    muted: e.muted,
-  }));
-}
+import type { FeedPost } from "./types.js";
 
 function toIgFeedPost(raw: RawIgFeedPost): FeedPost {
   return {
